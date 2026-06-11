@@ -6,6 +6,7 @@ import MovieDetail from "./MovieDetail"
 import Auth from "./Auth"
 import Favourites from "./Favourites"
 
+
 function App() {
   const [theme, setTheme] = useState("light")
 

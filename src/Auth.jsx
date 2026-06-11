@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { auth } from "./firebase"
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"
 import { useNavigate } from "react-router-dom"
 
 function Auth() {
@@ -18,6 +18,19 @@ function Auth() {
         await createUserWithEmailAndPassword(auth, email, password)
       }
       navigate("/")
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function resetPassword() {
+    if (!email) {
+      setError("Enter your email first")
+      return
+    }
+    try {
+      await sendPasswordResetEmail(auth, email)
+      setError("Password reset email sent. Check your inbox.")
     } catch (err) {
       setError(err.message)
     }
@@ -48,6 +61,14 @@ function Auth() {
         >
           {isLogin ? "Login" : "Sign Up"}
         </button>
+        {isLogin && (
+          <p
+            onClick={resetPassword}
+            className="text-center text-sm text-blue-500 mt-2 cursor-pointer hover:underline"
+          >
+            Forgot Password?
+          </p>
+        )}
         <p
           onClick={() => setIsLogin(!isLogin)}
           className="text-center text-sm text-gray-500 mt-4 cursor-pointer hover:text-blue-500"
