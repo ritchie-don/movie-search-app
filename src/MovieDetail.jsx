@@ -2,12 +2,15 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useContext } from "react"
 import ThemeContext from "./ThemeContext"
+import { db, auth } from "./firebase"
+import { doc, setDoc } from "firebase/firestore"
 
 function MovieDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [saved, setSaved] = useState(false)
   const { theme } = useContext(ThemeContext)
 
   useEffect(() => {
@@ -18,6 +21,27 @@ function MovieDetail() {
         setLoading(false)
       })
   }, [id])
+
+  async function saveToFavourites() {
+    const user = auth.currentUser
+    if (!user) return
+
+    await setDoc(doc(db, "favourites", `${user.uid}_${id}`), {
+      userId: user.uid,
+      imdbID: movie.imdbID,
+      title: movie.Title,
+      poster: movie.Poster,
+      year: movie.Year
+    })
+    setSaved(true)
+  }
+
+  const styles = {
+    backgroundColor: theme === "light" ? "white" : "#222",
+    color: theme === "light" ? "black" : "white",
+    minHeight: "100vh",
+    padding: "20px"
+  }
 
   if (loading) return <p className="text-center mt-20 text-gray-500">Loading...</p>
 
@@ -38,6 +62,12 @@ function MovieDetail() {
             <p className="mb-2"><strong>Director:</strong> {movie.Director}</p>
             <p className="mb-2"><strong>IMDB Rating:</strong> ⭐ {movie.imdbRating}</p>
             <p className="mt-4 text-gray-600">{movie.Plot}</p>
+            <button
+              onClick={saveToFavourites}
+              className={`mt-6 px-6 py-2 rounded text-white ${saved ? "bg-green-500" : "bg-blue-500 hover:bg-blue-600"}`}
+            >
+              {saved ? "✅ Saved to Favourites" : "Save to Favourites"}
+            </button>
           </div>
         </div>
       </div>

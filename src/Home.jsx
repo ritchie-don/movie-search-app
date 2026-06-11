@@ -1,29 +1,63 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useContext } from "react"
+import { useNavigate } from "react-router-dom"
 import ThemeContext from "./ThemeContext"
 import MovieCard from "./MovieCard"
+import { auth } from "./firebase"
+import { onAuthStateChanged, signOut } from "firebase/auth"
 
 function Home() {
   const [query, setQuery] = useState("")
   const [movies, setMovies] = useState([])
   const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState(null)
   const { theme, toggleTheme } = useContext(ThemeContext)
+  const navigate = useNavigate()
 
- function searchMovies() {
-  console.log("search button clicked")
-  setLoading(true)
- fetch(`https://www.omdbapi.com/?s=batman&apikey=trilogy`)
-    .then(res => res.json())
-    .then(data => {
-      console.log(data)
-      setMovies(data.Search || [])
-      setLoading(false)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        navigate("/auth")
+      } else {
+        setUser(currentUser)
+      }
     })
-}
+    return unsubscribe
+  }, [])
+
+  function searchMovies() {
+    setLoading(true)
+    fetch(`https://www.omdbapi.com/?s=${query}&apikey=trilogy`)
+      .then(res => res.json())
+      .then(data => {
+        setMovies(data.Search || [])
+        setLoading(false)
+      })
+  }
+
   return (
     <div className={`min-h-screen p-8 ${theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-6">🎬 Movie Search</h1>
+        {user && (
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-500">Logged in as {user.email}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/favourites")}
+                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+              >
+                ❤️ My Favourites
+              </button>
+              <button
+                onClick={() => signOut(auth)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
         <button
           onClick={toggleTheme}
           className="mb-6 px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
